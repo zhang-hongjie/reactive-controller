@@ -1,0 +1,18 @@
+# test memory database application configuration
+spring:
+  jpa:
+    database: POSTGRESQL
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.show_sql: false
+      hibernate.format_sql: true
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://postgres/example_test?schema=public
+    username: exampletest
+    password: exampletest
+  liquibase:
+    enabled: true
+

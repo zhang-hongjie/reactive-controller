@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+    postgres:
+        build: "docker/postgres"
+        container_name: "postgres"
+        ports:
+            - 5432:5432
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_MULTIPLE_DATABASES: example_dev,example_test
