@@ -9,6 +9,9 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.util.Arrays;
+import java.util.List;
+
 @RunWith(SpringRunner.class)
 @Sql(scripts = {"classpath:db/fixture/main.sql"})
 @IntegrationTest
@@ -20,13 +23,15 @@ public class MainControllerTest {
 
 	@Test
 	public void test() {
-		client.get().uri("/api/v1/mains?page=0&size=20")
+		client.get().uri("/api/v1/mains")
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange()
 				.expectStatus()
 				.isOk()
 				.expectBody()
-				.jsonPath("$.length()").isEqualTo(0);
+				.jsonPath("$.length()").isEqualTo(2)
+				.jsonPath("$.[0].id").isEqualTo("id")
+				.jsonPath("$.[1].id").isEqualTo("id2");
 	}
 
 }

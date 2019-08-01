@@ -1,0 +1,35 @@
+changesMd5: f01a627d9d54ae00944e9944913ba653
+databaseChangeLog:
+- changeSet:
+    id: 1564654537922-1
+    author: az02293 (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: id
+            type: VARCHAR(50)
+        - column:
+            name: comment
+            type: TEXT
+        - column:
+            name: date
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: estimation
+            type: numeric
+        - column:
+            name: isout
+            type: BOOLEAN
+        tableName: main
+- changeSet:
+    id: 1564654537922-2
+    author: az02293 (generated)
+    changes:
+    - addPrimaryKey:
+        columnNames: id
+        constraintName: mainPK
+        tableName: main
+

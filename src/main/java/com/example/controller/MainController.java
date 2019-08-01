@@ -15,7 +15,7 @@ public class MainController {
     private MainService service;
 
     @ResponseBody
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping
     public Flux<MainEntity> find() {
         return service.findAll();
     }

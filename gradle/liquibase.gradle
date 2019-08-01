@@ -8,19 +8,29 @@ apply plugin: 'groovy'
 
 buildscript {
     repositories {
-        mavenLocal()
-        mavenCentral()
+        maven {
+            credentials {
+                username System.getenv("NEXUS_USERNAME") == null ? NEXUS_USERNAME : System.getenv("NEXUS_USERNAME")
+                password System.getenv("NEXUS_PASSWORD") == null ? NEXUS_PASSWORD : System.getenv("NEXUS_PASSWORD")
+            }
+            url "https://repo.renault-digital.com/repository/renault-digital-entry/"
+        }
     }
     dependencies {
-        classpath "org.liquibase.ext:liquibase-hibernate5:3.6"
-        classpath "org.yaml:snakeyaml:1.19"
-        classpath "org.postgresql:postgresql:42.2.2"
+        classpath "org.liquibase.ext:liquibase-hibernate5:3.7"
+        classpath "org.yaml:snakeyaml:1.24"
+        classpath "org.postgresql:postgresql:42.2.5"
     }
 }
 
 repositories {
-    mavenLocal()
-    mavenCentral()
+    maven {
+        credentials {
+            username System.getenv("NEXUS_USERNAME") == null ? NEXUS_USERNAME : System.getenv("NEXUS_USERNAME")
+            password System.getenv("NEXUS_PASSWORD") == null ? NEXUS_PASSWORD : System.getenv("NEXUS_PASSWORD")
+        }
+        url "https://repo.renault-digital.com/repository/renault-digital-entry/"
+    }
 }
 
 configurations { driver }
@@ -28,9 +38,9 @@ configurations { driver }
 dependencies {
     // Declare a localGroovy() dependency, to use the Groovy library that ships with Gradle.
     compile localGroovy()
-    driver "org.postgresql:postgresql:42.2.2"
-    runtime "org.yaml:snakeyaml:1.19"
-    runtime "org.liquibase.ext:liquibase-hibernate5:3.6"
+    driver "org.postgresql:postgresql:42.2.5"
+    runtime "org.yaml:snakeyaml:1.24"
+    runtime "org.liquibase.ext:liquibase-hibernate5:3.7"
 }
 
 URLClassLoader loader = GroovyObject.class.classLoader
@@ -38,8 +48,8 @@ configurations.driver.each {File file ->
     loader.addURL(file.toURL())
 }
 
-//### input parameters
-def fixturesFileName= "fixtures.yaml"
+//### input parameters, for example "fixtures.yaml"
+def footerFromFileName= "NoFooter"
 
 
 //### code
@@ -90,7 +100,7 @@ def masterChangeLogFile = "$projectDir/$masterChangeLogFileRelativePath"
 println "master changelog file: $masterChangeLogFile"
 if (!(new File(masterChangeLogFile)).exists()) {
     println 'diffChangeLog: master changelog file not existed, create it.'
-    new File(masterChangeLogFile).text = "databaseChangeLog:\n    - objectQuotingStrategy: 'QUOTE_ALL_OBJECTS'"
+    new File(masterChangeLogFile).text = "databaseChangeLog:"
 }
 def masterChangeLog = yamlLoader.loadAll(new File(masterChangeLogFileRelativePath).newInputStream()).first()
 def masterChangeLogIncludes = masterChangeLog.databaseChangeLog.include.file
@@ -125,19 +135,19 @@ def sprintDiffChangeLogBuildDir = "$buildDir/resources/main/${relativePath}"
 def sprintDiffChangeLogBuildDirFile = "$sprintDiffChangeLogBuildDir/${fileName}"
 def sprintDiffChangeLogBuildDirFileExisted = (new File(sprintDiffChangeLogBuildDirFile)).exists()
 
-//### take account of the special changelog "fixtures" or "referencials"
-def fixturesFileNameIndex = null
+//### take account of the special changelog "footers" or "referencials"
+def footerFromFileNameIndex = null
 for (int i=0; i< masterChangeLogIncludesSize; i++) {
-    if (masterChangeLogIncludes[i].endsWith("/$fixturesFileName")) {
-        fixturesFileNameIndex = i
+    if (masterChangeLogIncludes[i].endsWith("/$footerFromFileName")) {
+        footerFromFileNameIndex = i
     }
 }
 println "masterChangeLogIncludesSize all: $masterChangeLogIncludesSize"
-if (fixturesFileNameIndex!=null) {
-    masterChangeLogIncludesSize = fixturesFileNameIndex
+if (footerFromFileNameIndex!=null) {
+    masterChangeLogIncludesSize = footerFromFileNameIndex
 }
-println "masterChangeLogIncludesSize until fixtures(exclude): $masterChangeLogIncludesSize"
-println "fixture changelog index $fixturesFileNameIndex, file: " + ((masterChangeLogIncludesSize==0 || fixturesFileNameIndex==null) ? null : masterChangeLogIncludes[fixturesFileNameIndex])
+println "masterChangeLogIncludesSize until footers(exclude): $masterChangeLogIncludesSize"
+println "footer changelog index $footerFromFileNameIndex, file: " + ((masterChangeLogIncludesSize==0 || footerFromFileNameIndex==null) ? null : masterChangeLogIncludes[footerFromFileNameIndex])
 
 //### get previews changelog file
 def previewsChangeLogFile=null
@@ -156,35 +166,35 @@ print "\npreviews changelog file: ${previewsChangeLogFile}"
 def previewsChangelogFileApplied = dbDevReady && isChangelogApplied(dbUrl, dbUsername, dbPassword, dbDevDriver, previewsChangeLogFile)
 print ", applied: $previewsChangelogFileApplied\n"
 
-//### get last applied changelog file (not fixtures)
+//### get last applied changelog file (not footers)
 def allAppliedChangelogFileNames = dbDevReady ? getAllAppliedChangelogFileNames(dbUrl, dbUsername, dbPassword, dbDevDriver) : null
 def allAppliedChangelogFileNamesSize = allAppliedChangelogFileNames==null ? 0 : allAppliedChangelogFileNames.size()
 println "the number of all applied changelogs: $allAppliedChangelogFileNamesSize"
 
-def allAppliedChangelogFileNamesBeforeFixtures = allAppliedChangelogFileNames
-def changelogFileNamesAfterFixtures = new HashSet()
-if (fixturesFileNameIndex!=null) {
-    changelogFileNamesAfterFixtures.addAll( masterChangeLogIncludes[fixturesFileNameIndex..(masterChangeLogIncludes.size()-1)] )
+def allAppliedChangelogFileNamesBeforeFooters = allAppliedChangelogFileNames
+def changelogFileNamesAfterFooters = new HashSet()
+if (footerFromFileNameIndex!=null) {
+    changelogFileNamesAfterFooters.addAll( masterChangeLogIncludes[footerFromFileNameIndex..(masterChangeLogIncludes.size()-1)] )
 
-    def fixturesChangelogFileRelativePath = "${mainResources}/"+masterChangeLogIncludes[fixturesFileNameIndex]
-    if (fixturesFileName.endsWith(".yaml") || fixturesFileName.endsWith(".yml")) {
-        def fixturesChangelogFile = "$projectDir/$fixturesChangelogFileRelativePath"
-        println "fixtures changelog file: $fixturesChangelogFile"
-        if ((new File(fixturesChangelogFile)).exists()) {
-            def fixturesChangeLog = yamlLoader.loadAll(new File(fixturesChangelogFileRelativePath).newInputStream()).first()
-            def fixturesChangeLogIncludes = fixturesChangeLog.databaseChangeLog.include.file
-            changelogFileNamesAfterFixtures.addAll( fixturesChangeLogIncludes )
+    def footersChangelogFileRelativePath = "${mainResources}/"+masterChangeLogIncludes[footerFromFileNameIndex]
+    if (footerFromFileName.endsWith(".yaml") || footerFromFileName.endsWith(".yml")) {
+        def footersChangelogFile = "$projectDir/$footersChangelogFileRelativePath"
+        println "footers changelog file: $footersChangelogFile"
+        if ((new File(footersChangelogFile)).exists()) {
+            def footersChangeLog = yamlLoader.loadAll(new File(footersChangelogFileRelativePath).newInputStream()).first()
+            def footersChangeLogIncludes = footersChangeLog.databaseChangeLog.include.file
+            changelogFileNamesAfterFooters.addAll( footersChangeLogIncludes )
         }
     }
 }
-if (allAppliedChangelogFileNamesBeforeFixtures!=null) {
-    // changelogFileNamesAfterFixtures.each {println it}
-    allAppliedChangelogFileNamesBeforeFixtures.removeIf {  changelogFileNamesAfterFixtures.contains(it.trim()) }
-    println "the number of applied changelogs before fixture: " + allAppliedChangelogFileNamesBeforeFixtures.size()
-    // allAppliedChangelogFileNamesBeforeFixtures.each{ println it }
+if (allAppliedChangelogFileNamesBeforeFooters!=null) {
+    // changelogFileNamesAfterFooters.each {println it}
+    allAppliedChangelogFileNamesBeforeFooters.removeIf {  changelogFileNamesAfterFooters.contains(it.trim()) }
+    println "the number of applied changelogs before footer: " + allAppliedChangelogFileNamesBeforeFooters.size()
+    // allAppliedChangelogFileNamesBeforeFooters.each{ println it }
 }
 
-def lastAppliedChangelogFileName = allAppliedChangelogFileNamesBeforeFixtures==null || allAppliedChangelogFileNamesBeforeFixtures.size()==0 ? null : allAppliedChangelogFileNamesBeforeFixtures[-1]
+def lastAppliedChangelogFileName = allAppliedChangelogFileNamesBeforeFooters==null || allAppliedChangelogFileNamesBeforeFooters.size()==0 ? null : allAppliedChangelogFileNamesBeforeFooters[-1]
 print "\nlast applied changelog: $lastAppliedChangelogFileName"
 def lastAppliedChangelogFileNameInMasterIncludes =
         lastAppliedChangelogFileName!=null && !lastAppliedChangelogFileName.trim().isEmpty() && masterChangeLogIncludesSize>0 ? masterChangeLogIncludes.contains(lastAppliedChangelogFileName.trim()) : false
