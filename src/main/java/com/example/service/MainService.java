@@ -22,9 +22,9 @@ public class MainService {
 	private Scheduler scheduler;
 
 	@Transactional(readOnly = true)
-	public Flux<MainEntity> findAll() {
+	public List<MainEntity> findAll() {
 		List<MainEntity> result = repository.findAll();
-		return Flux.fromIterable(result).subscribeOn(scheduler);
+		return result;
 	}
 
 }
