@@ -7,6 +7,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "/api/v1/mains")
 public class MainController {
@@ -16,7 +18,7 @@ public class MainController {
 
     @ResponseBody
     @GetMapping
-    public Flux<MainEntity> find() {
+    public List<MainEntity> find() {
         return service.findAll();
     }
 

@@ -33,6 +33,7 @@ apply plugin: 'jacoco'
 apply from: 'gradle/liquibase.gradle'
 
 configurations {
+    querydslapt
     mapstruct
     diff
 }
@@ -153,6 +154,22 @@ dependencies {
     compile 'io.springfox:springfox-swagger-ui:3.0.0-SNAPSHOT'
 
     compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
+
+
+
+
+    // querydsl for jpa sql request
+    compile 'com.querydsl:querydsl-jpa:4.2.1'
+    compile('com.querydsl:querydsl-core:4.2.1')
+
+    // querydsl apt
+    querydslapt('com.querydsl:querydsl-apt:4.2.1')
+    //compileOnly "com.querydsl:querydsl-apt:4.2.1"
+
+
+    // hibernate envers : versionning support
+    compile('org.hibernate:hibernate-core:5.4.3.Final')
+    compile('org.hibernate:hibernate-envers:5.4.3.Final')
 }
 
 // configuration properties metadata
