@@ -30,11 +30,11 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
     drop-first: true
-#  jackson:
-#    serialization:
-#      write-dates-as-timestamps: false
-#    deserialization:
-#      accept-empty-string-as-null-object: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      accept-empty-string-as-null-object: true
 
 # actuator endpoints
 management:
