@@ -30,7 +30,7 @@ public class CarControllerTest {
 	}
 
 	@Test
-	public void should_not_get_car_info_when_get_list() {
+	public void should_get_car_info_when_get_list() {
 		client.get().uri("/api/v1/cars/list")
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange()
