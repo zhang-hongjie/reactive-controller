@@ -8,5 +8,4 @@
     <logger name="org.springframework" level="DEBUG"/>
     <logger name="org.apache" level="DEBUG"/>
     <logger name="reactor" level="DEBUG"/>
-
 </configuration>
