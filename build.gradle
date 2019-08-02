@@ -1,7 +1,6 @@
 buildscript {
     ext {
         springBootVersion = '2.1.6.RELEASE'
-        camelVersion = '2.17.0'
     }
     repositories {
         mavenCentral()
@@ -11,31 +10,20 @@ buildscript {
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-        classpath('io.spring.gradle:propdeps-plugin:0.0.9.RELEASE')
+        classpath('io.spring.gradle:propdeps-plugin:0.0.10.RELEASE')
     }
 }
 
 plugins {
-    id 'net.ltgt.apt' version '0.16'
-    id "org.sonarqube" version "2.6.2"
-
-    id "org.springframework.boot" version "2.0.3.RELEASE"
-    // generate git commit information (exposed via /info endpoint)
-    //id "com.gorylenko.gradle-git-properties" version "1.5.1"
+    id 'net.ltgt.apt' version '0.21'
+    id "org.springframework.boot" version "2.1.6.RELEASE"
 }
 
+apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
-apply plugin: 'jacoco'
-apply from: 'gradle/liquibase.gradle'
 
-configurations {
-    mapstruct
-    diff
-}
 
 configure(allprojects) {
     apply plugin: 'propdeps'
@@ -48,111 +36,22 @@ group 'com.example'
 version '1.0-SNAPSHOT'
 sourceCompatibility = 1.8
 
-
 repositories {
     mavenLocal()
     mavenCentral()
     maven { url "https://repo.spring.io/snapshot" }
     maven { url "https://repo.spring.io/milestone" }
-
-    // repository for sprinfox / swagger
-    jcenter()
-    maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local/'}
 }
-
-springBoot {
-    // generate gradle build information (exposed via /info endpoint)
-    buildInfo()
-}
-
-build {
-    doLast {
-        // println "build doLast launched."
-        // def outDir = "$projectDir/out"
-        // def gitInfo=new File("$buildDir/resources/main/git.properties")
-        // def buildInfo=new File("$buildDir/resources/main/META-INF/build-info.properties")
-
-        // if (new File(outDir).exists()) {
-        //     println "need to copy 2 files to $outDir"
-
-        //     if (gitInfo.exists()) {
-        //         println "copying $gitInfo"
-        //         copy {
-        //             from gitInfo
-        //             into "$outDir/production/resources"
-        //         }
-        //     }
-
-        //     if (buildInfo.exists()) {
-        //         println "copying $buildInfo"
-        //         copy {
-        //             from buildInfo
-        //             into "$outDir/production/resources/META-INF"
-        //         }
-        //     }
-        // }
-    }
-}
-
-// gitProperties {
-//     keys = ['git.branch', 'git.build.host', 'git.build.time', 'git.build.version', 'git.closest.tag.name', 'git.commit.id', 'git.commit.id.abbrev', 'git.commit.message.full', 'git.commit.message.short', 'git.commit.time', 'git.remote.origin.url', 'git.tags', 'git.total.commit.count']
-// }
 
 dependencies {
     testCompile('org.springframework.boot:spring-boot-starter-test')
-    compile('org.springframework.boot:spring-boot-starter-data-jpa')
     compile('org.springframework.boot:spring-boot-starter-webflux')
-    compile('org.springframework.security:spring-security-web')
-    // when you enable this deps, you must use SecurityConfig, if not will 401 unautorized.
-    compile('org.springframework.security:spring-security-config')
-
-    runtime('org.postgresql:postgresql')
-
-    compile('org.projectlombok:lombok:1.18.2')
-    annotationProcessor("org.projectlombok:lombok:1.18.2")
 
     // problem of deps:
     // bad composite: tomcat + webflux + Mono/POJO + gzip  => problem of CONENT_LENGTH+TRANSFER_ENCODING
-//        compile("org.apache.tomcat.embed:tomcat-embed-core:8.5.31")
-}
-
-// configuration properties metadata
-// see https://docs.spring.io/spring-boot/docs/2.0.0.RC1/reference/html/configuration-metadata.html#configuration-metadata-annotation-processor
-compileJava.dependsOn(processResources)
-
-// unit testing
-check.dependsOn jacocoTestReport
-jacocoTestReport {
-    reports {
-        xml.enabled true
-        html.enabled false
-    }
-}
-
-// sonar
-sonarqube {
-    properties {
-        property 'sonar.projectName', 'api'
-        property 'sonar.projectKey', 'api'
-        property "sonar.jacoco.reportPaths", "$buildDir/jacoco/jacocoTest.exec" + "," + "$buildDir/jacoco/jacocoIT.exec"
-        property "sonar.junit.reportPaths", "$buildDir/test-results/test" + "," + "$buildDir/test-results/verify"
-        property "sonar.core.codeCoveragePlugin", "jacoco"
-        property "sonar.language", "java"
-        property "sonar.coverage.exclusions", "**/models/**/*.java, **/exceptions/**/*.java, **/*Value*.java, **/*Config.java, **/FilterOrder.java, **/technical/**/Reactive*.java"
-        property "sonar.exclusions", "**/generated/**/*.java, **/StatusRule.java" // lambda issues with Sonar analysis: https://groups.google.com/forum/#!topic/sonarqube/itiwDuSEWyY
-    }
-}
-
-sourceSets {
-    generated.java
-    main.java.srcDirs += generated.java.srcDirs
-}
-
-//jar.dependsOn diff
-//compileTestJava.dependsOn diff
-
-clean {
-    delete sourceSets.generated.java.srcDirs
+//    compile("org.apache.tomcat.embed:tomcat-embed-core:8.5.31") // NOK
+//    compile("org.apache.tomcat.embed:tomcat-embed-core:9.0.21") // NOK
+    compile("org.apache.tomcat.embed:tomcat-embed-core:9.0.22") // NOK
 }
 
 defaultTasks 'clean','build'

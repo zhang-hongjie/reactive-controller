@@ -1,57 +1,7 @@
 # Server
 server:
  port: 8099
- error:
-  whitelabel:
-    enabled: false
- max-http-header-size: 1048576 # 1MB
  compression:
    enabled: true
    min-response-size: 10
    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
-
-# database configuration
-spring:
-  jpa: 
-    database: POSTGRESQL
-    generate-ddl: false
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate.default_schema: public
-      hibernate.jdbc.lob.non_contextual_creation: true
-      hibernate.jdbc.timezone: UTC
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-  liquibase:
-    enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-    drop-first: true
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-    deserialization:
-      accept-empty-string-as-null-object: true
-
-# actuator endpoints
-management:
-  info:
-    git:
-      mode: full
-  endpoints:
-    web:
-      base-path: /api/actuator
-      exposure:
-        include: '*'
-
-# log
-logging:
-  reactor:
-    enabled: true
-  access:
-    enabled: true
-
-referenceUrl: hibernate:spring:com.example?dialect=org.hibernate.dialect.PostgreSQL9Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy

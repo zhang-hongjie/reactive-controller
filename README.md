@@ -2,12 +2,7 @@
 
 ### Prerequisites
 
-Java 8, Docker
-
-### Start prototype dev database with docker 
-
-cd api  
-docker-compose up -d
+Java 8
 
 ### Build from source
 
