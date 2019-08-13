@@ -16,32 +16,8 @@
  */
 package org.apache.coyote.http11;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.nio.ByteBuffer;
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.coyote.AbstractProcessor;
-import org.apache.coyote.ActionCode;
-import org.apache.coyote.Adapter;
-import org.apache.coyote.ErrorState;
-import org.apache.coyote.Request;
-import org.apache.coyote.RequestInfo;
-import org.apache.coyote.UpgradeProtocol;
-import org.apache.coyote.UpgradeToken;
-import org.apache.coyote.http11.filters.BufferedInputFilter;
-import org.apache.coyote.http11.filters.ChunkedInputFilter;
-import org.apache.coyote.http11.filters.ChunkedOutputFilter;
-import org.apache.coyote.http11.filters.GzipOutputFilter;
-import org.apache.coyote.http11.filters.IdentityInputFilter;
-import org.apache.coyote.http11.filters.IdentityOutputFilter;
-import org.apache.coyote.http11.filters.SavedRequestInputFilter;
-import org.apache.coyote.http11.filters.VoidInputFilter;
-import org.apache.coyote.http11.filters.VoidOutputFilter;
+import org.apache.coyote.*;
+import org.apache.coyote.http11.filters.*;
 import org.apache.coyote.http11.upgrade.InternalHttpUpgradeHandler;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -54,18 +30,25 @@ import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.http.parser.HttpParser;
 import org.apache.tomcat.util.log.UserDataHelper;
 import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
-import org.apache.tomcat.util.net.SSLSupport;
-import org.apache.tomcat.util.net.SendfileDataBase;
-import org.apache.tomcat.util.net.SendfileKeepAliveState;
-import org.apache.tomcat.util.net.SendfileState;
-import org.apache.tomcat.util.net.SocketWrapperBase;
+import org.apache.tomcat.util.net.*;
 import org.apache.tomcat.util.res.StringManager;
-import org.springframework.util.StringUtils;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.nio.ByteBuffer;
+import java.util.Enumeration;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+import static org.springframework.util.StringUtils.hasText;
 
 public class FixedHttp11Processor extends AbstractProcessor {
 
     private static final Log log = LogFactory.getLog(FixedHttp11Processor.class);
 
+    public static final String CONTENT_ENCODING = "Content-Encoding";
+    public static final String CONTENT_LENGTH = "Content-Length";
     /**
      * The string manager for this package.
      */
@@ -224,13 +207,13 @@ public class FixedHttp11Processor extends AbstractProcessor {
      */
     private static boolean statusDropsConnection(int status) {
         return status == 400 /* SC_BAD_REQUEST */ ||
-               status == 408 /* SC_REQUEST_TIMEOUT */ ||
-               status == 411 /* SC_LENGTH_REQUIRED */ ||
-               status == 413 /* SC_REQUEST_ENTITY_TOO_LARGE */ ||
-               status == 414 /* SC_REQUEST_URI_TOO_LONG */ ||
-               status == 500 /* SC_INTERNAL_SERVER_ERROR */ ||
-               status == 503 /* SC_SERVICE_UNAVAILABLE */ ||
-               status == 501 /* SC_NOT_IMPLEMENTED */;
+                status == 408 /* SC_REQUEST_TIMEOUT */ ||
+                status == 411 /* SC_LENGTH_REQUIRED */ ||
+                status == 413 /* SC_REQUEST_ENTITY_TOO_LARGE */ ||
+                status == 414 /* SC_REQUEST_URI_TOO_LONG */ ||
+                status == 500 /* SC_INTERNAL_SERVER_ERROR */ ||
+                status == 503 /* SC_SERVICE_UNAVAILABLE */ ||
+                status == 501 /* SC_NOT_IMPLEMENTED */;
     }
 
 
@@ -248,7 +231,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
             // Skip
         } else if (encodingName.equals("chunked")) {
             inputBuffer.addActiveFilter
-                (inputFilters[Constants.CHUNKED_FILTER]);
+                    (inputFilters[Constants.CHUNKED_FILTER]);
             contentDelimitation = true;
         } else {
             for (int i = pluggableFilterIndex; i < inputFilters.length; i++) {
@@ -263,7 +246,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
             setErrorState(ErrorState.CLOSE_CLEAN, null);
             if (log.isDebugEnabled()) {
                 log.debug(sm.getString("http11processor.request.prepare") +
-                          " Unsupported transfer encoding [" + encodingName + "]");
+                        " Unsupported transfer encoding [" + encodingName + "]");
             }
         }
     }
@@ -271,7 +254,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
 
     @Override
     public SocketState service(SocketWrapperBase<?> socketWrapper)
-        throws IOException {
+            throws IOException {
         RequestInfo rp = request.getRequestProcessor();
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
@@ -587,7 +570,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
             setErrorState(ErrorState.CLOSE_CLEAN, null);
             if (log.isDebugEnabled()) {
                 log.debug(sm.getString("http11processor.request.prepare")+
-                          " Unsupported HTTP version \""+protocolMB+"\"");
+                        " Unsupported HTTP version \""+protocolMB+"\"");
             }
         }
 
@@ -600,7 +583,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
             if (findBytes(connectionValueBC, Constants.CLOSE_BYTES) != -1) {
                 keepAlive = false;
             } else if (findBytes(connectionValueBC,
-                                 Constants.KEEPALIVE_BYTES) != -1) {
+                    Constants.KEEPALIVE_BYTES) != -1) {
                 keepAlive = true;
             }
         }
@@ -848,7 +831,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
                 statusCode == 304) {
             // No entity body
             outputBuffer.addActiveFilter
-                (outputFilters[Constants.VOID_FILTER]);
+                    (outputFilters[Constants.VOID_FILTER]);
             entityBody = false;
             contentDelimitation = true;
             if (statusCode == 205) {
@@ -864,7 +847,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
         if (methodMB.equals("HEAD")) {
             // No entity body
             outputBuffer.addActiveFilter
-                (outputFilters[Constants.VOID_FILTER]);
+                    (outputFilters[Constants.VOID_FILTER]);
             contentDelimitation = true;
         }
 
@@ -890,7 +873,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
             String contentLanguage = response.getContentLanguage();
             if (contentLanguage != null) {
                 headers.setValue("Content-Language")
-                    .setString(contentLanguage);
+                        .setString(contentLanguage);
             }
         }
 
@@ -971,10 +954,7 @@ public class FixedHttp11Processor extends AbstractProcessor {
         try {
             outputBuffer.sendStatus();
 
-            String transferEncoding = headers.getHeader(Constants.TRANSFERENCODING);
-            if (StringUtils.hasText(transferEncoding)) {
-                headers.removeHeader("Content-Length");
-            }
+            cleanResponseHeaders();
 
             int size = headers.size();
             for (int i = 0; i < size; i++) {
@@ -990,6 +970,26 @@ public class FixedHttp11Processor extends AbstractProcessor {
         }
 
         outputBuffer.commit();
+    }
+
+    /**
+     * Clean the invalid headers using the NEW rule of http 1.1 protocol of RFC7230 in https://tools.ietf.org/html/rfc7230#section-3.3,
+     * ignore the old rules of obsoleted RFC2616 in https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+     *
+     *     Rule 1: A sender MUST NOT send a Content-Length header field in any message
+     *             that contains a Transfer-Encoding header field.
+     *     Rule 2: a server MUST NOT send Content-Length in a response unless its field-value equals the
+     *             decimal number of octets that would have been sent in the payload
+     *             body of a response.
+     *             for example, we should remove Content-Length if the compressed content length is unknown (Ref org.apache.coyote.CompressionConfig)
+     */
+    private void cleanResponseHeaders() {
+        MimeHeaders headers = response.getMimeHeaders();
+        String transferEncoding = headers.getHeader(Constants.TRANSFERENCODING);
+        String contentEncoding = headers.getHeader(CONTENT_ENCODING);
+        if (hasText(transferEncoding) || contentEncoding!=null && contentEncoding.toLowerCase().contains("gzip") ) {
+            headers.removeHeader(CONTENT_LENGTH);
+        }
     }
 
     private static boolean isConnectionClose(MimeHeaders headers) {
@@ -1309,15 +1309,15 @@ public class FixedHttp11Processor extends AbstractProcessor {
             }
             result = socketWrapper.processSendfile(sendfileData);
             switch (result) {
-            case ERROR:
-                // Write failed
-                if (log.isDebugEnabled()) {
-                    log.debug(sm.getString("http11processor.sendfile.error"));
-                }
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, null);
-                //$FALL-THROUGH$
-            default:
-                sendfileData = null;
+                case ERROR:
+                    // Write failed
+                    if (log.isDebugEnabled()) {
+                        log.debug(sm.getString("http11processor.sendfile.error"));
+                    }
+                    setErrorState(ErrorState.CLOSE_CONNECTION_NOW, null);
+                    //$FALL-THROUGH$
+                default:
+                    sendfileData = null;
             }
         }
         return result;
