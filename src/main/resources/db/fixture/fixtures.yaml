@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: main-entities
+      author: xxx
+      context: fixture
+      preConditions:
+        - onFail: CONTINUE
+        - onError: WARN
+        - sqlCheck:
+            expectedResult: 1
+            sql: SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' and table_name='main'
+      changes:
+        - sqlFile:
+            splitStatements: false
+            path: db/fixture/mains.sql

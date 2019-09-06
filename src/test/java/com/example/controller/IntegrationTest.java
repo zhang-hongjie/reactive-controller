@@ -8,10 +8,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = {"spring.main.WebApplicationType=reactive"})
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+		properties = {"spring.main.WebApplicationType=reactive"})
 @ActiveProfiles("test")
 public @interface IntegrationTest {
 

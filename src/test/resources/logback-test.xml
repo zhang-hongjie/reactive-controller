@@ -5,8 +5,8 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
     <logger name="org.springframework.web" level="INFO"/>
-    <logger name="org.hibernate.SQL" level="INFO"/>
-    <logger name="liquibase" level="INFO"/>
+    <logger name="org.hibernate.SQL" level="debug"/>
+    <logger name="liquibase" level="debug"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

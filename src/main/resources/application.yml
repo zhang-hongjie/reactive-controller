@@ -1,6 +1,6 @@
 # Server
 server:
- port: 8099
+ port: 8080
  error:
   whitelabel:
     enabled: false
@@ -29,7 +29,7 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
-    drop-first: true
+    contexts: 'reference'
   jackson:
     serialization:
       write-dates-as-timestamps: false

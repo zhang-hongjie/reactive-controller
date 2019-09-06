@@ -9,11 +9,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.util.Arrays;
-import java.util.List;
-
 @RunWith(SpringRunner.class)
-@Sql(scripts = {"classpath:db/fixture/main.sql"})
 @IntegrationTest
 @AutoConfigureWebTestClient
 public class MainControllerTest {
