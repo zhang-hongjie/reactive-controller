@@ -184,10 +184,16 @@ sourceSets {
 }
 
 jar.dependsOn diff
-compileTestJava.dependsOn diff
+//compileTestJava.dependsOn diff
 
 clean {
     delete sourceSets.generated.java.srcDirs
+}
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
 }
 
 defaultTasks 'clean','build'

@@ -4,15 +4,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 @RunWith(SpringRunner.class)
-@Sql(scripts = {"classpath:db/fixture/main.sql"})
-@IntegrationTest
+//@Sql(scripts = {"classpath:db/fixture/mains.sql"})
 @AutoConfigureWebTestClient
+@IntegrationTest
 public class MainControllerTest {
 
 	@Autowired
@@ -26,7 +33,7 @@ public class MainControllerTest {
 				.expectStatus()
 				.isOk()
 				.expectBody()
-				.jsonPath("$.length()").isEqualTo(0);
+				.jsonPath("$.length()").isEqualTo(2);
 	}
 
 }

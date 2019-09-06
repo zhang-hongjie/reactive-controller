@@ -40,7 +40,9 @@ configurations.driver.each {File file ->
 
 //### input parameters
 def fixturesFileName= "fixtures.yaml"
-
+def masterChangeLogFileHeader = "databaseChangeLog:"
+def newChangelogPrefix = "\n  - include:\n      file: "
+def myStartDayOfFirstSprint = "2017-09-29"
 
 //### code
 def mainResources=projectDir.toPath().relativize(sourceSets.main.resources.srcDirs.iterator().next().toPath()).toString()
@@ -69,7 +71,7 @@ println "database DEV ${cfgDev.spring.datasource.url} is ready: ${dbDevReady}"
 //output files
 def currentBranch = getWorkingBranch()
 print "\nCurrent branch: $currentBranch"
-def sprintNumber = getSprintNumber()
+def sprintNumber = getSprintNumber(myStartDayOfFirstSprint)
 def disabledBranches = ["integration", "qualification", "master"]
 def isEabledBranch = ! disabledBranches.contains(currentBranch)
 println ", task DIFF is enabled for this branch: ${isEabledBranch}"
@@ -90,7 +92,7 @@ def masterChangeLogFile = "$projectDir/$masterChangeLogFileRelativePath"
 println "master changelog file: $masterChangeLogFile"
 if (!(new File(masterChangeLogFile)).exists()) {
     println 'diffChangeLog: master changelog file not existed, create it.'
-    new File(masterChangeLogFile).text = "databaseChangeLog:\n    - objectQuotingStrategy: 'QUOTE_ALL_OBJECTS'"
+    new File(masterChangeLogFile).text = masterChangeLogFileHeader
 }
 def masterChangeLog = yamlLoader.loadAll(new File(masterChangeLogFileRelativePath).newInputStream()).first()
 def masterChangeLogIncludes = masterChangeLog.databaseChangeLog.include.file
@@ -137,7 +139,7 @@ if (fixturesFileNameIndex!=null) {
     masterChangeLogIncludesSize = fixturesFileNameIndex
 }
 println "masterChangeLogIncludesSize until fixtures(exclude): $masterChangeLogIncludesSize"
-println "fixture changelog index $fixturesFileNameIndex, file: " + ((masterChangeLogIncludesSize==0 || fixturesFileNameIndex==null) ? null : masterChangeLogIncludes[fixturesFileNameIndex])
+println "fixture changelog index $fixturesFileNameIndex, file: " + ((fixturesFileNameIndex==null) ? null : masterChangeLogIncludes[fixturesFileNameIndex])
 
 //### get previews changelog file
 def previewsChangeLogFile=null
@@ -261,9 +263,13 @@ task diffChangeLog(type: JavaExec, dependsOn: 'update') {
                 println 'diffChangeLog: file not existed, create it.'
                 sprintFileTemp.renameTo(sprintFile)
                 println 'diffChangeLog: append created file to master change log file.'
-                def newChangelog = "\n    - include:\n        file: ${sprintChangeLogRelativePath}"
-                if (previewsChangeLogFile!=null) {
-                    masterFile.text = masterFile.text.replace(previewsChangeLogFile , previewsChangeLogFile + newChangelog )
+                def newChangelog = "${newChangelogPrefix}${sprintChangeLogRelativePath}"
+                if (fixturesFileNameIndex!=null) {
+                    if (previewsChangeLogFile!=null) {
+                        masterFile.text = masterFile.text.replace(previewsChangeLogFile , previewsChangeLogFile + newChangelog )
+                    } else {
+                        masterFile.text = masterFile.text.replaceAll(masterChangeLogFileHeader , masterChangeLogFileHeader + newChangelog )
+                    }
                 } else {
                     masterFile.text = masterFile.text + newChangelog
                 }
@@ -320,16 +326,14 @@ def addToGitIndex(file) {
  */
 def getWorkingBranch() {
     // Triple double-quotes for the breaklines
-    def workingBranch = """git --git-dir=${rootDir}/../.git
-                               --work-tree=${rootDir}/..
-                               rev-parse --abbrev-ref HEAD""".execute().text.trim().replace('/','-')
+    def workingBranch = """git rev-parse --abbrev-ref HEAD""".execute().text.trim().replace('/','-')
     if (!workingBranch || workingBranch.trim().isEmpty()) workingBranch="init"
     return workingBranch
 }
 
-int getSprintNumber() { // 2018-05-10 15; 2018-05-11 16
+int getSprintNumber(startDayOfFirstSprint) { // 2018-05-10 15; 2018-05-11 16
     use(groovy.time.TimeCategory) {
-        def duration = new Date() - new SimpleDateFormat("yyyy-MM-dd").parse("2017-09-29")
+        def duration = new Date() - new SimpleDateFormat("yyyy-MM-dd").parse(startDayOfFirstSprint)
         int sprintNumber = duration.days/14
         // println "sprintNumber: ${sprintNumber}"
         return sprintNumber
