@@ -21,7 +21,7 @@ plugins {
 
     id "org.springframework.boot" version "2.0.3.RELEASE"
     // generate git commit information (exposed via /info endpoint)
-    //id "com.gorylenko.gradle-git-properties" version "1.5.1"
+    id "com.gorylenko.gradle-git-properties" version "1.5.1"
 }
 
 apply plugin: 'java'
@@ -67,53 +67,60 @@ springBoot {
 
 build {
     doLast {
-        // println "build doLast launched."
-        // def outDir = "$projectDir/out"
-        // def gitInfo=new File("$buildDir/resources/main/git.properties")
-        // def buildInfo=new File("$buildDir/resources/main/META-INF/build-info.properties")
+         println "build doLast launched."
+         def outDir = "$projectDir/out"
+         def gitInfo=new File("$buildDir/resources/main/git.properties")
+         def buildInfo=new File("$buildDir/resources/main/META-INF/build-info.properties")
 
-        // if (new File(outDir).exists()) {
-        //     println "need to copy 2 files to $outDir"
+         if (new File(outDir).exists()) {
+             println "need to copy 2 files to $outDir"
 
-        //     if (gitInfo.exists()) {
-        //         println "copying $gitInfo"
-        //         copy {
-        //             from gitInfo
-        //             into "$outDir/production/resources"
-        //         }
-        //     }
+             if (gitInfo.exists()) {
+                 println "copying $gitInfo"
+                 copy {
+                     from gitInfo
+                     into "$outDir/production/resources"
+                 }
+             }
 
-        //     if (buildInfo.exists()) {
-        //         println "copying $buildInfo"
-        //         copy {
-        //             from buildInfo
-        //             into "$outDir/production/resources/META-INF"
-        //         }
-        //     }
-        // }
+             if (buildInfo.exists()) {
+                 println "copying $buildInfo"
+                 copy {
+                     from buildInfo
+                     into "$outDir/production/resources/META-INF"
+                 }
+             }
+         }
     }
 }
 
-// gitProperties {
-//     keys = ['git.branch', 'git.build.host', 'git.build.time', 'git.build.version', 'git.closest.tag.name', 'git.commit.id', 'git.commit.id.abbrev', 'git.commit.message.full', 'git.commit.message.short', 'git.commit.time', 'git.remote.origin.url', 'git.tags', 'git.total.commit.count']
-// }
+gitProperties {
+ keys = ['git.branch', 'git.build.host', 'git.build.time', 'git.build.version', 'git.closest.tag.name', 'git.commit.id', 'git.commit.id.abbrev', 'git.commit.message.full', 'git.commit.message.short', 'git.commit.time', 'git.remote.origin.url', 'git.tags', 'git.total.commit.count']
+}
 
 dependencies {
     testCompile('org.springframework.boot:spring-boot-starter-test')
+    compile('org.springframework.boot:spring-boot-starter-actuator')
     compile('org.springframework.boot:spring-boot-starter-data-jpa')
     compile('org.springframework.boot:spring-boot-starter-webflux')
     compile('org.springframework.security:spring-security-web')
     // when you enable this deps, you must use SecurityConfig, if not will 401 unautorized.
     compile('org.springframework.security:spring-security-config')
-
-    runtime('org.postgresql:postgresql')
+    compile("org.apache.tomcat.embed:tomcat-embed-core")
 
     compile('org.projectlombok:lombok:1.18.2')
     annotationProcessor("org.projectlombok:lombok:1.18.2")
 
-    // problem of deps:
-    // bad composite: tomcat + webflux + Mono/POJO + gzip  => problem of CONENT_LENGTH+TRANSFER_ENCODING
-//        compile("org.apache.tomcat.embed:tomcat-embed-core:8.5.31")
+    // database / liquibase
+    runtime('org.postgresql:postgresql')
+    compile group: 'org.yaml', name: 'snakeyaml', version: '1.24'
+    compile('org.liquibase:liquibase-core:3.7.0')
+    compile('org.liquibase.ext:liquibase-hibernate5:3.6')
+
+    // springfox / swagger documentation
+    compile "io.springfox:springfox-swagger2:3.0.0-SNAPSHOT"
+    compile "io.springfox:springfox-spring-webflux:3.0.0-SNAPSHOT"
+    compile 'io.springfox:springfox-swagger-ui:3.0.0-SNAPSHOT'
 }
 
 // configuration properties metadata
@@ -148,11 +155,17 @@ sourceSets {
     main.java.srcDirs += generated.java.srcDirs
 }
 
-//jar.dependsOn diff
+jar.dependsOn diff
 //compileTestJava.dependsOn diff
 
 clean {
     delete sourceSets.generated.java.srcDirs
+}
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
 }
 
 defaultTasks 'clean','build'

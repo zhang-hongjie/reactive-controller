@@ -17,3 +17,13 @@ cd api
 ### Run with java
 
 java -jar -Dspring.profiles.active=dev build/libs/reactive-controller-1.0-SNAPSHOT.jar
+
+### Features
+- springboot 2.0.3
+- databbase server: docker postgres
+- liquibase: jpa entity-> database DDL changelog -> migrate `DDL changelog` & `data fixture` to database server postgres
+- hibernate/JPA
+- Reactive WebFlux API
+- Spring actuator API http://localhost:8080/api/actuator
+- API security config
+- generate swagger documentation http://localhost:8080/swagger-ui.html

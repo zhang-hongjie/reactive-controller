@@ -8,13 +8,8 @@ apply plugin: 'groovy'
 
 buildscript {
     repositories {
-        maven {
-            credentials {
-                username System.getenv("NEXUS_USERNAME") == null ? NEXUS_USERNAME : System.getenv("NEXUS_USERNAME")
-                password System.getenv("NEXUS_PASSWORD") == null ? NEXUS_PASSWORD : System.getenv("NEXUS_PASSWORD")
-            }
-            url "https://repo.renault-digital.com/repository/renault-digital-entry/"
-        }
+        mavenLocal()
+        mavenCentral()
     }
     dependencies {
         classpath "org.liquibase.ext:liquibase-hibernate5:3.7"
@@ -24,13 +19,8 @@ buildscript {
 }
 
 repositories {
-    maven {
-        credentials {
-            username System.getenv("NEXUS_USERNAME") == null ? NEXUS_USERNAME : System.getenv("NEXUS_USERNAME")
-            password System.getenv("NEXUS_PASSWORD") == null ? NEXUS_PASSWORD : System.getenv("NEXUS_PASSWORD")
-        }
-        url "https://repo.renault-digital.com/repository/renault-digital-entry/"
-    }
+    mavenLocal()
+    mavenCentral()
 }
 
 configurations { driver }
@@ -48,8 +38,11 @@ configurations.driver.each {File file ->
     loader.addURL(file.toURL())
 }
 
-//### input parameters, for example "fixtures.yaml"
-def footerFromFileName= "NoFooter"
+//### input parameters
+def footerFromFileName= "fixtures.yaml"
+def masterChangeLogFileHeader = "databaseChangeLog:"
+def newChangelogPrefix = "\n  - include:\n      file: "
+def myStartDayOfFirstSprint = "2017-09-29"
 
 
 //### code
@@ -79,7 +72,7 @@ println "database DEV ${cfgDev.spring.datasource.url} is ready: ${dbDevReady}"
 //output files
 def currentBranch = getWorkingBranch()
 print "\nCurrent branch: $currentBranch"
-def sprintNumber = getSprintNumber()
+def sprintNumber = getSprintNumber(myStartDayOfFirstSprint)
 def disabledBranches = ["integration", "qualification", "master"]
 def isEabledBranch = ! disabledBranches.contains(currentBranch)
 println ", task DIFF is enabled for this branch: ${isEabledBranch}"
@@ -100,7 +93,7 @@ def masterChangeLogFile = "$projectDir/$masterChangeLogFileRelativePath"
 println "master changelog file: $masterChangeLogFile"
 if (!(new File(masterChangeLogFile)).exists()) {
     println 'diffChangeLog: master changelog file not existed, create it.'
-    new File(masterChangeLogFile).text = "databaseChangeLog:"
+    new File(masterChangeLogFile).text = masterChangeLogFileHeader
 }
 def masterChangeLog = yamlLoader.loadAll(new File(masterChangeLogFileRelativePath).newInputStream()).first()
 def masterChangeLogIncludes = masterChangeLog.databaseChangeLog.include.file
@@ -143,11 +136,14 @@ for (int i=0; i< masterChangeLogIncludesSize; i++) {
     }
 }
 println "masterChangeLogIncludesSize all: $masterChangeLogIncludesSize"
+
+def footersChangelogFileRelativePath = null
 if (footerFromFileNameIndex!=null) {
     masterChangeLogIncludesSize = footerFromFileNameIndex
+    footersChangelogFileRelativePath = "${mainResources}/"+masterChangeLogIncludes[footerFromFileNameIndex]
 }
 println "masterChangeLogIncludesSize until footers(exclude): $masterChangeLogIncludesSize"
-println "footer changelog index $footerFromFileNameIndex, file: " + ((masterChangeLogIncludesSize==0 || footerFromFileNameIndex==null) ? null : masterChangeLogIncludes[footerFromFileNameIndex])
+println "footer changelogs start from index $footerFromFileNameIndex, file: " + footersChangelogFileRelativePath
 
 //### get previews changelog file
 def previewsChangeLogFile=null
@@ -176,10 +172,9 @@ def changelogFileNamesAfterFooters = new HashSet()
 if (footerFromFileNameIndex!=null) {
     changelogFileNamesAfterFooters.addAll( masterChangeLogIncludes[footerFromFileNameIndex..(masterChangeLogIncludes.size()-1)] )
 
-    def footersChangelogFileRelativePath = "${mainResources}/"+masterChangeLogIncludes[footerFromFileNameIndex]
     if (footerFromFileName.endsWith(".yaml") || footerFromFileName.endsWith(".yml")) {
         def footersChangelogFile = "$projectDir/$footersChangelogFileRelativePath"
-        println "footers changelog file: $footersChangelogFile"
+        println "footer changelogs start from file absolute path: $footersChangelogFile"
         if ((new File(footersChangelogFile)).exists()) {
             def footersChangeLog = yamlLoader.loadAll(new File(footersChangelogFileRelativePath).newInputStream()).first()
             def footersChangeLogIncludes = footersChangeLog.databaseChangeLog.include.file
@@ -271,9 +266,13 @@ task diffChangeLog(type: JavaExec, dependsOn: 'update') {
                 println 'diffChangeLog: file not existed, create it.'
                 sprintFileTemp.renameTo(sprintFile)
                 println 'diffChangeLog: append created file to master change log file.'
-                def newChangelog = "\n    - include:\n        file: ${sprintChangeLogRelativePath}"
-                if (previewsChangeLogFile!=null) {
-                    masterFile.text = masterFile.text.replace(previewsChangeLogFile , previewsChangeLogFile + newChangelog )
+                def newChangelog = "${newChangelogPrefix}${sprintChangeLogRelativePath}"
+                if (footerFromFileNameIndex!=null) {
+                    if (previewsChangeLogFile!=null) {
+                        masterFile.text = masterFile.text.replace(previewsChangeLogFile , previewsChangeLogFile + newChangelog )
+                    } else {
+                        masterFile.text = masterFile.text.replaceAll(masterChangeLogFileHeader , masterChangeLogFileHeader + newChangelog )
+                    }
                 } else {
                     masterFile.text = masterFile.text + newChangelog
                 }
@@ -330,16 +329,14 @@ def addToGitIndex(file) {
  */
 def getWorkingBranch() {
     // Triple double-quotes for the breaklines
-    def workingBranch = """git --git-dir=${rootDir}/../.git
-                               --work-tree=${rootDir}/..
-                               rev-parse --abbrev-ref HEAD""".execute().text.trim().replace('/','-')
+    def workingBranch = """git rev-parse --abbrev-ref HEAD""".execute().text.trim().replace('/','-')
     if (!workingBranch || workingBranch.trim().isEmpty()) workingBranch="init"
     return workingBranch
 }
 
-int getSprintNumber() { // 2018-05-10 15; 2018-05-11 16
+int getSprintNumber(startDayOfFirstSprint) { // 2018-05-10 15; 2018-05-11 16
     use(groovy.time.TimeCategory) {
-        def duration = new Date() - new SimpleDateFormat("yyyy-MM-dd").parse("2017-09-29")
+        def duration = new Date() - new SimpleDateFormat("yyyy-MM-dd").parse(startDayOfFirstSprint)
         int sprintNumber = duration.days/14
         // println "sprintNumber: ${sprintNumber}"
         return sprintNumber
