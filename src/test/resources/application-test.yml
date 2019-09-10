@@ -16,5 +16,5 @@ spring:
   liquibase:
     enabled: true
     drop-first: true
-    contexts: 'fixture, reference'
+    contexts: 'reference'
 

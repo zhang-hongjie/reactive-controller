@@ -1,0 +1,229 @@
+changesMd5: a2d9b50191026b158b1a2c4db2dc80c0
+databaseChangeLog:
+- changeSet:
+    id: 1568113710561-1
+    author: az02293 (generated)
+    changes:
+    - createSequence:
+        sequenceName: hibernate_sequence
+- changeSet:
+    id: 1568113710561-2
+    author: az02293 (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: datachangelogPK
+            name: id
+            type: BIGINT
+        - column:
+            name: action_type
+            type: VARCHAR(255)
+        - column:
+            defaultValueComputed: now()
+            name: date
+            type: TIMESTAMP NOT NULL
+        - column:
+            name: json_new
+            type: JSON
+        - column:
+            name: json_old
+            type: JSON
+        - column:
+            name: row_id
+            type: VARCHAR(255)
+        - column:
+            name: table_name
+            type: VARCHAR(255)
+        tableName: datachangelog
+- changeSet:
+    id: 1568113710561-3
+    author: az02293 (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              primaryKey: true
+              primaryKeyName: mainPK
+            name: id
+            type: VARCHAR(50)
+        - column:
+            name: comment
+            type: TEXT
+        - column:
+            name: date
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: estimation
+            type: numeric
+        - column:
+            name: isout
+            type: BOOLEAN
+        tableName: main
+- changeSet:
+    id: 1568113710561-4
+    author: az02293 (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              primaryKey: true
+              primaryKeyName: main_audPK
+            name: id
+            type: VARCHAR(50)
+        - column:
+            constraints:
+              primaryKey: true
+              primaryKeyName: main_audPK
+            name: rev
+            type: INTEGER
+        - column:
+            name: revtype
+            type: SMALLINT
+        - column:
+            name: comment
+            type: TEXT
+        - column:
+            name: comment_mod
+            type: BOOLEAN
+        - column:
+            name: date
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: date_mod
+            type: BOOLEAN
+        - column:
+            name: estimation
+            type: numeric
+        - column:
+            name: estimation_mod
+            type: BOOLEAN
+        - column:
+            name: isout
+            type: BOOLEAN
+        - column:
+            name: isout_mod
+            type: BOOLEAN
+        tableName: main_aud
+- changeSet:
+    id: 1568113710561-5
+    author: az02293 (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              primaryKey: true
+              primaryKeyName: revinfoPK
+            name: rev
+            type: INTEGER
+        - column:
+            name: revtstmp
+            type: BIGINT
+        - column:
+            name: revuser
+            type: VARCHAR(255)
+        tableName: revinfo
+- changeSet:
+    id: 1568113710561-6
+    author: az02293 (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              primaryKey: true
+              primaryKeyName: sql_deletePK
+            name: id
+            type: VARCHAR(50)
+        - column:
+            name: comment
+            type: TEXT
+        - column:
+            name: date
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: estimation
+            type: numeric
+        - column:
+            name: isout
+            type: BOOLEAN
+        tableName: sql_delete
+- changeSet:
+    id: 1568113710561-7
+    author: az02293 (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              primaryKey: true
+              primaryKeyName: sql_delete_audPK
+            name: id
+            type: VARCHAR(50)
+        - column:
+            constraints:
+              primaryKey: true
+              primaryKeyName: sql_delete_audPK
+            name: rev
+            type: INTEGER
+        - column:
+            name: revtype
+            type: SMALLINT
+        - column:
+            name: comment
+            type: TEXT
+        - column:
+            name: comment_mod
+            type: BOOLEAN
+        - column:
+            name: date
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: date_mod
+            type: BOOLEAN
+        - column:
+            name: estimation
+            type: numeric
+        - column:
+            name: estimation_mod
+            type: BOOLEAN
+        - column:
+            name: isout
+            type: BOOLEAN
+        - column:
+            name: isout_mod
+            type: BOOLEAN
+        tableName: sql_delete_aud
+- changeSet:
+    id: 1568113710561-8
+    author: az02293 (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: rev
+        baseTableName: sql_delete_aud
+        constraintName: FKi5nul9fwd8ide74lyn01a70sh
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: rev
+        referencedTableName: revinfo
+        validate: true
+- changeSet:
+    id: 1568113710561-9
+    author: az02293 (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: rev
+        baseTableName: main_aud
+        constraintName: FKmq6sa1au57cqybre12yoci1f6
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: rev
+        referencedTableName: revinfo
+        validate: true
+

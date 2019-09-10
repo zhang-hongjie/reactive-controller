@@ -1,3 +1,7 @@
 databaseChangeLog:
   - include:
+      file: db/changelog/generated/sprint-50-master-springBoot216.yaml
+  - include:
+      file: db/changelog/manual/create_triggers.sql
+  - include:
       file: db/fixture/fixtures.yaml

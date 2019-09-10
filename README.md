@@ -22,7 +22,7 @@ java -jar -Dspring.profiles.active=dev build/libs/reactive-controller-1.0-SNAPSH
 - springboot 2.1.6
 - databbase server: docker postgres
 - liquibase: jpa entity-> database DDL changelog -> migrate `DDL changelog` & `data fixture` to database server postgres
-- hibernate/JPA
+- hibernate/JPA/Envers
 - Reactive WebFlux API
 - Spring actuator API http://localhost:8080/api/actuator
 - API security config
