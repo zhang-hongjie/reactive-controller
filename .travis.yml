@@ -1,0 +1,12 @@
+travis encrypt 46f3db36310af9b95bc26a215d1dc1a70884f39f
+language: java
+dist: trusty
+
+addons:
+  sonarcloud:
+    organization: "zhang-hongjie"
+    token:
+      secure: "**************************" # encrypted value of your token
+
+script:
+  - ./gradlew sonarqube
